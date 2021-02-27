@@ -194,7 +194,7 @@ public class SerializerTest extends SerializerTestCommon {
         out.writeObject(t1,TClass1.class);
         out.writeObject(null,TClass1.class);
 
-        //Test failure
+        //JanusTest failure
         for (Object o : new Object[]{new TClass2("abc",2),Calendar.getInstance(), Lists.newArrayList()}) {
             try {
                 out.writeObjectNotNull(o);
@@ -292,7 +292,7 @@ public class SerializerTest extends SerializerTestCommon {
 //            assertTrue(text.length()> StringSerializer.TEXT_COMPRESSION_THRESHOLD);
 //            StaticBuffer s = getStringBuffer(text);
 ////            System.out.println(String.format("String length [%s] -> byte size [%s]",text.length(),s.length()));
-//            assertTrue(text.length()>s.length()); //Test that actual compression is happening
+//            assertTrue(text.length()>s.length()); //JanusTest that actual compression is happening
 //        }
 
         //Gzip Encoding
@@ -305,7 +305,7 @@ public class SerializerTest extends SerializerTestCommon {
             assertTrue(text.length()> StringSerializer.LONG_COMPRESSION_THRESHOLD);
             StaticBuffer s = getStringBuffer(text);
 //            System.out.println(String.format("String length [%s] -> byte size [%s]",text.length(),s.length()));
-            assertTrue(text.length()>s.length()*10); //Test that radical compression is happening
+            assertTrue(text.length()>s.length()*10); //JanusTest that radical compression is happening
         }
 
         for (int t = 0; t < 10000; t++) {

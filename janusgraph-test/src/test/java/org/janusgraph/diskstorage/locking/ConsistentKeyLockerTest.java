@@ -167,7 +167,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test a single lock using stub objects. Doesn't test unlock ("leaks" the
+     * JanusTest a single lock using stub objects. Doesn't test unlock ("leaks" the
      * lock, but since it's backed by stubs, it doesn't matter).
      *
      * @throws org.janusgraph.diskstorage.BackendException shouldn't happen
@@ -192,7 +192,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test locker when first attempt to write to the store takes too long (but
+     * JanusTest locker when first attempt to write to the store takes too long (but
      * succeeds). Expected behavior is to call mutate on the store, adding a
      * column with a new timestamp and deleting the column with the old
      * (too-slow-to-write) timestamp.
@@ -213,7 +213,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test locker when all three attempts to write a lock succeed but take
+     * JanusTest locker when all three attempts to write a lock succeed but take
      * longer than the wait limit. We expect the locker to delete all three
      * columns that it wrote and locally unlock the KeyColumn, then emit an
      * exception.
@@ -241,7 +241,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test that the first {@link org.janusgraph.diskstorage.PermanentBackendException} thrown by the
+     * JanusTest that the first {@link org.janusgraph.diskstorage.PermanentBackendException} thrown by the
      * locker's store causes it to attempt to delete outstanding lock writes and
      * then emit the exception without retrying.
      *
@@ -269,7 +269,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test the locker retries a lock write after the initial store mutation
+     * JanusTest the locker retries a lock write after the initial store mutation
      * fails with a {@link org.janusgraph.diskstorage.TemporaryBackendException}. The retry should both
      * attempt to write the and delete the failed mutation column.
      *
@@ -291,7 +291,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test that a failure to lock locally results in a {@link TemporaryLockingException}
+     * JanusTest that a failure to lock locally results in a {@link TemporaryLockingException}
      *
      * @throws org.janusgraph.diskstorage.BackendException shouldn't happen
      */
@@ -352,7 +352,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test that multiple calls to
+     * JanusTest that multiple calls to
      * {@link ConsistentKeyLocker#writeLock(KeyColumn, StoreTransaction)} with
      * the same arguments have no effect after the first call (until
      * {@link ConsistentKeyLocker#deleteLocks(StoreTransaction)} is called).
@@ -379,7 +379,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Test a single checking a single lock under optimal conditions (no
+     * JanusTest a single checking a single lock under optimal conditions (no
      * timeouts, no errors)
      *
      * @throws org.janusgraph.diskstorage.BackendException     shouldn't happen
@@ -488,7 +488,7 @@ public class ConsistentKeyLockerTest {
     }
 
     /**
-     * Each written lock should be checked at most once. Test this by faking a
+     * Each written lock should be checked at most once. JanusTest this by faking a
      * single previously written lock using mocks and stubs and then calling
      * checkLocks() twice. The second call should have no effect.
      *

@@ -102,7 +102,7 @@ public class LockCleanerRunnableTest {
     }
 
     /**
-     * Test the cleaner against a set of locks where some locks have timestamps
+     * JanusTest the cleaner against a set of locks where some locks have timestamps
      * before the cutoff and others have timestamps after the cutoff. One lock
      * has a timestamp equal to the cutoff.
      */
@@ -152,7 +152,7 @@ public class LockCleanerRunnableTest {
 
     /**
      * Locks with timestamps equal to or numerically greater than the cleaner
-     * cutoff timestamp must be preserved. Test that the cleaner reads locks by
+     * cutoff timestamp must be preserved. JanusTest that the cleaner reads locks by
      * slicing the store and then does <b>not</b> attempt to write.
      */
     @Test

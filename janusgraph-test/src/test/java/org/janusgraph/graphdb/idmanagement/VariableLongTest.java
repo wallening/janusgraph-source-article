@@ -75,7 +75,7 @@ public class VariableLongTest {
             }
         }
 
-        //Test boundaries
+        //JanusTest boundaries
         wb = new WriteByteBuffer(512);
         impl.write(wb,0);
         impl.write(wb,Long.MAX_VALUE);
