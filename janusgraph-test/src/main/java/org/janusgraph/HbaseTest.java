@@ -6,11 +6,18 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.janusgraph.diskstorage.EntryList;
+import org.janusgraph.diskstorage.util.ReadArrayBuffer;
+import org.janusgraph.diskstorage.util.StaticArrayEntryList;
+import org.janusgraph.graphdb.database.serialize.attribute.StringSerializer;
+import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
 
 public class HbaseTest {
     static Logger logger = LoggerFactory.getLogger(HbaseTest.class);
@@ -28,25 +35,46 @@ public class HbaseTest {
             Result result = scanner.next();
             byte[] rowkey = result.getRow();
 
-            logger.info("{} {}", i, Bytes.toStringBinary(rowkey));
-            logger.info("{} {}", i, toStringBinary(rowkey));
+            String b = toStringBinary(rowkey);
+            logger.info("{} rowkey: {}", i, Bytes.toStringBinary(rowkey));
+            logger.info("{} rowkey byte {} {}", i, rowkey.length, b);
 
-            if (i==33){
-                logger.info("");
-            }
+
+            int j = 0;
             for (Cell cell : result.rawCells()) {
-                byte[] f = cell.getFamilyArray();
-                byte[] q = cell.getQualifierArray();
-                byte[] v = cell.getValueArray();
+                j++;
+                byte[] f = Bytes.copy(cell.getFamilyArray(), cell.getFamilyOffset(), cell.getFamilyLength());
+                byte[] q = Bytes.copy(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength());
+                byte[] v = Bytes.copy(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
+                if (v.length == 8) {
+                    if (4112 == Bytes.toLong(v)) {
+                        logger.info("可能存储的复合索引  value=4112");
+                    }
+                }
+
                 logger.info("{} family: {} qualifier: {} value: {}", i, Bytes.toString(f), Bytes.toString(q), Bytes.toString(v));
+                logger.info("{} family: {} qualifier: {} value: {}", i, Bytes.toStringBinary(f), Bytes.toStringBinary(q), Bytes.toStringBinary(v));
+                logger.info("{} qualifier: {}", i, toStringBinary(q));
+
+                if (rowkey.length == 8 && b.endsWith("000") && j > 2) {
+                    if (v.length > 1) {
+
+//                        String vS = new StringSerializer().read(new ReadArrayBuffer(v));
+//                        logger.info("vS: {}", vS);
+                    }
+                }
             }
-            logger.info("{} {}", i, result);
+            logger.info("{} {}\n", i, result);
 
         }
         conn.close();
     }
 
     public static String toStringBinary(byte[] bs) {
+        if (bs == null || bs.length == 0) {
+            return "";
+        }
+
         StringBuilder result = new StringBuilder();
         for (byte b : bs) {
             result.append(toStringBinary(b) + "-");

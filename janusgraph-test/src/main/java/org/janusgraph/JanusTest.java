@@ -1,11 +1,25 @@
 package org.janusgraph;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.janusgraph.core.*;
+import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.schema.JanusGraphManagement;
+import org.janusgraph.diskstorage.Backend;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.StaticBuffer;
+import org.janusgraph.diskstorage.hbase.HBaseKeyColumnValueStore;
+import org.janusgraph.diskstorage.hbase.HBaseStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
+import org.janusgraph.graphdb.database.IndexSerializer;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
+import org.janusgraph.graphdb.database.management.ManagementSystem;
+import org.janusgraph.graphdb.types.SchemaSource;
+import org.janusgraph.graphdb.types.indextype.CompositeIndexTypeWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,15 +29,18 @@ public class JanusTest {
     static Logger logger = LoggerFactory.getLogger(JanusTest.class);
 
     public static void main(String[] args) {
-        String p = "/home/sdzw/local/workspace/JanusGraph/janusgraph-source-article/janusgraph-test/janusgraph-hbase-es.properties";
+        String p = "./janusgraph-test/janusgraph-hbase-es.properties";
         try (JanusGraph client = JanusGraphFactory.open(new PropertiesConfiguration(p))) {
 
 //            test1_schema(client);
 
 //            test2_data(client);
 
-            test3_query(client);
+//            test3_query(client);
 
+            test4_printSchema(client);
+
+//            test5_compositeindex((StandardJanusGraph) client);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -31,15 +48,77 @@ public class JanusTest {
 
     }
 
+    static void test5_compositeindex(StandardJanusGraph client) {
+        String indexName = "v1_p1";
+        String value = "v1p1";
+        IndexSerializer indexSerializer = client.getIndexSerializer();
+        ManagementSystem mgmt = (ManagementSystem) client.openManagement();
+        CompositeIndexTypeWrapper indexType = (CompositeIndexTypeWrapper) ManagementSystem.getGraphIndexDirect(indexName, mgmt.getWrappedTx());
+        Long id = indexType.getID();
+
+        logger.info("复合索引 {} id: {}", indexName, id);
+        Object[] objs = new Object[1];
+        objs[0] = value;
+        // 此方法是私有的
+        StaticBuffer buffer = indexSerializer.getIndexKey(indexType, objs);
+        byte[] bs = buffer.asByteBuffer().array();
+        String rowkey = HbaseTest.toStringBinary(bs);
+
+        logger.info("复合索引 {} rowkey: {}", indexName, rowkey);
+        logger.info("复合索引 {} rowkey: {}", indexName, Bytes.toStringBinary(bs));
+
+        try {
+            HBaseStoreManager b = (HBaseStoreManager) client.getBackend().getStoreManager();
+            HBaseKeyColumnValueStore d = (HBaseKeyColumnValueStore) b.openDatabase(b.getName());
+
+            System.out.println("---");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void test4_printSchema(JanusGraph client) {
+        ManagementSystem mgmt = (ManagementSystem) client.openManagement();
+        String s = mgmt.printSchema();
+        System.out.println(s);
+        PropertyKey pp1 = mgmt.getPropertyKey(p1);
+
+        Iterable<JanusGraphIndex> vertexIndexes = mgmt.getGraphIndexes(Vertex.class);
+        for (JanusGraphIndex vertexIndex : vertexIndexes) {
+            CompositeIndexTypeWrapper indexType = (CompositeIndexTypeWrapper) mgmt.getGraphIndexDirect(vertexIndex.name(), mgmt.getWrappedTx());
+            SchemaSource schemaSource = indexType.getSchemaBase();
+            long id = indexType.getID();
+            byte[] bytes = Bytes.toBytes(id);
+            logger.info("indexName: {} id: {} {}", vertexIndex.name(), id, HbaseTest.toStringBinary(bytes));
+        }
+        logger.info("PropertyKey: {} id: {} {}", p1, pp1.longId(), HbaseTest.toStringBinary(Bytes.toBytes(pp1.longId())));
+
+    }
+
     static void test3_query(JanusGraph client) {
-        List<Vertex> list = client.traversal().V().hasLabel(v1).has(p1, "v1p1").toList();
+        query(client, "v1p1");
+//        query(client, "v1p1");
+//        query(client, "v1p2");
+//        query(client, "v1p1");
+    }
+
+    static void query(JanusGraph client, String val) {
+        String log = String.format("查询测试 %s", val);
+        logger.info("{}", log);
+        List<Vertex> list = client.traversal().V().hasLabel(v1).has(p1, val).toList();
         for (Vertex vertex : list) {
-            logger.info("id: {}", vertex.id());
+            logger.info("{} id: {} {}", log, vertex.id(), HbaseTest.toStringBinary(Bytes.toBytes((Long) vertex.id())));
 
             for (String key : vertex.keys()) {
-                logger.info("property: {}={}", key, vertex.property(key).value());
+                logger.info("{} property: {}={}", log, key, vertex.property(key).value());
             }
         }
+
+//        try {
+//            TimeUnit.SECONDS.sleep(10);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     static void test2_data(JanusGraph client) {

@@ -1,0 +1,121 @@
+复合索引 单属性 查询 源码分析
+
+点id序解析
+rowkey为64为long
+janus：0 | count | partition | ID padding (if any) 
+habse: partition |0 | count | ID padding
+
+
+点qualifier解析
+
+
+点属性解析
+通过调用以下方法自动解析habse数据
+String vS = new StringSerializer().read(new ReadArrayBuffer(v));
+
+
+边id解析
+
+
+边iqualifier解析
+
+
+边属性解析
+
+
+复合索引id解析
+此方法是private，无法直接使用
+IndexSerializer
+	private StaticBuffer getIndexKey(CompositeIndexType index, Object[] values)
+	
+复合索引
+
+
+复合iqualifier解析
+
+
+复合属性解析
+
+
+
+
+
+
+
+EdgeSerializer 
+	public RelationCache parseRelation(Entry data, boolean excludeProperties, TypeInspector tx)
+	
+CacheVertexProperty 
+
+GraphCentricQueryBuilder
+	// 通过复合索引查询
+	public GraphCentricQuery constructQueryWithoutProfile(final ElementCategory resultType)
+	
+
+JanusGraphStep
+	public JanusGraphStep(final GraphStep<S, E> originalStep)
+	
+IndexSerializer
+	public MultiKeySliceQuery getQuery(final CompositeIndexType index, List<Object[]> values) 
+	
+	
+	// 获取复合索引对应的Rowkey
+	private StaticBuffer getIndexKey(CompositeIndexType index, Object[] values) 
+		DEFAULT_OBJECT_BYTELEN = 30
+		final DataOutput out = serializer.getDataOutput(8*DEFAULT_OBJECT_BYTELEN + 8);
+		
+		// index.getID() = 1545 （索引v1p1）
+		// 将id使用压缩算法写入缓存
+		VariableLong.writePositive(out, index.getID());
+	
+	
+	
+	
+StringSerializer
+	// 序列化复合索引 值
+	// LONG_COMPRESSION_THRESHOLD = 16000 
+	// 超长使用压缩算法CompressionType.GZIP
+	// 如果
+	public void write(WriteBuffer buffer, String attribute)
+		// 判断每个字符在 0-127之间
+		if (StringEncoding.isAsciiString(attribute)) 
+
+VariableLong  好像没啥用
+	// id序列化 offset=14 value=1545
+	private static void writeUnsigned(WriteBuffer out, int offset, final long value)
+	
+	
+	
+	
+// 复合索引
+GraphCentricQueryBuilder
+	public GraphCentricQuery constructQueryWithoutProfile(final ElementCategory resultType)
+		337行
+		jointQuery.add((CompositeIndexType)bestCandidate,
+                            serializer.getQuery((CompositeIndexType)bestCandidate,(List<Object[]>)candidateSubCondition));
+							
+						
+
+
+// 写数据
+HbaseStoreManger
+	// 序列化到hbase
+	public void mutateMany(Map<String, Map<StaticBuffer, KCVMutation>> mutations, StoreTransaction txh)
+
+// habse查询
+HBaseKeyColumnValueStore
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
