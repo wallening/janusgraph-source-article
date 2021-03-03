@@ -931,6 +931,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         Long schemaId = newTypeCache.get(schemaName);
         if (schemaId==null) schemaId=graph.getSchemaCache().getSchemaId(schemaName);
         if (schemaId != null) {
+            log.debug("getSchemaVertex => schemaName: {} schemaId: {}", schemaName, schemaId);
             InternalVertex typeVertex = vertexCache.get(schemaId, existingVertexRetriever);
             assert typeVertex!=null;
             return (JanusGraphSchemaVertex)typeVertex;

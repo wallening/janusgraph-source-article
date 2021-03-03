@@ -96,6 +96,7 @@ public interface QueryProfiler {
         sub.setAnnotation(QUERY_ANNOTATION, query);
         if (query.hasLimit()) sub.setAnnotation(LIMIT_ANNOTATION,query.getLimit());
         sub.startTimer();
+        // 查询数据
         final R result = queryExecutor.apply(query);
         sub.stopTimer();
         long resultSize = 0;

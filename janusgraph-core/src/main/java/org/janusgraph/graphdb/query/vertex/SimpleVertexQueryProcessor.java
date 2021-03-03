@@ -50,6 +50,7 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
     private final VertexCentricQuery query;
     private final StandardJanusGraphTx tx;
     private final EdgeSerializer edgeSerializer;
+    // 复合索引查询时 CacheVertex
     private final InternalVertex vertex;
     private final QueryProfiler profiler;
 

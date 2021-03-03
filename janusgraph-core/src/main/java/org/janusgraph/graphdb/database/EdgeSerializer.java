@@ -70,6 +70,7 @@ public class EdgeSerializer implements RelationReader {
     public RelationCache readRelation(Entry data, boolean parseHeaderOnly, TypeInspector tx) {
         RelationCache map = data.getCache();
         if (map == null || !(parseHeaderOnly || map.hasProperties())) {
+            // 序列化属性
             map = parseRelation(data, parseHeaderOnly, tx);
             data.setCache(map);
         }

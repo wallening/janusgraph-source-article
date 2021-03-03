@@ -9,8 +9,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.util.ReadArrayBuffer;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
+import org.janusgraph.graphdb.database.idhandling.IDHandler;
 import org.janusgraph.graphdb.database.serialize.attribute.StringSerializer;
 import org.janusgraph.graphdb.idmanagement.IDManager;
+import org.janusgraph.graphdb.types.system.BaseKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,18 +58,38 @@ public class HbaseTest {
                 logger.info("{} family: {} qualifier: {} value: {}", i, Bytes.toStringBinary(f), Bytes.toStringBinary(q), Bytes.toStringBinary(v));
                 logger.info("{} qualifier: {}", i, toStringBinary(q));
 
-                if (rowkey.length == 8 && b.endsWith("000") && j > 2) {
-                    if (v.length > 1) {
 
-//                        String vS = new StringSerializer().read(new ReadArrayBuffer(v));
-//                        logger.info("vS: {}", vS);
-                    }
+                long typeid = parseQ(q);
+                // 点属性p1 p2
+                if (typeid == 1029 || typeid == 2053) {
+                    parseV(v);
+
                 }
+
             }
             logger.info("{} {}\n", i, result);
 
         }
         conn.close();
+    }
+
+    static void parseV(byte[] v) {
+        String vS = new StringSerializer().read(new ReadArrayBuffer(v));
+        logger.info("value解析值: {}", vS);
+    }
+
+    static long parseQ(byte[] q) {
+        try {
+            if (q.length == 1 && q[0] == 0) {
+                return -1;
+            }
+            IDHandler.RelationTypeParse typeAndDir = IDHandler.readRelationType(new ReadArrayBuffer(q));
+            logger.info("属性或边id: {}", typeAndDir.typeId);
+            return typeAndDir.typeId;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public static String toStringBinary(byte[] bs) {

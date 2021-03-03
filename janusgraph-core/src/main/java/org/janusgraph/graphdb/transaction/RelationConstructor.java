@@ -23,6 +23,7 @@ import org.janusgraph.graphdb.database.EdgeSerializer;
 import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
+import org.janusgraph.graphdb.query.vertex.SimpleVertexQueryProcessor;
 import org.janusgraph.graphdb.relations.CacheEdge;
 import org.janusgraph.graphdb.relations.CacheVertexProperty;
 import org.janusgraph.graphdb.relations.RelationCache;
@@ -44,7 +45,10 @@ public class RelationConstructor {
     public static Iterable<JanusGraphRelation> readRelation(final InternalVertex vertex, final Iterable<Entry> data, final StandardJanusGraphTx tx) {
         return () -> new Iterator<JanusGraphRelation>() {
 
+            // 已经查询完毕,数据保存再CacheVertex.queryCache.SliceQuery.value
+            // data SimpleVertexQueryProcessor
             private final Iterator<Entry> iterator = data.iterator();
+            // CacheVertexProperty
             private JanusGraphRelation current = null;
 
             @Override
@@ -67,6 +71,7 @@ public class RelationConstructor {
     }
 
     public static InternalRelation readRelation(final InternalVertex vertex, final Entry data, final StandardJanusGraphTx tx) {
+        // 序列化属性
         RelationCache relation = tx.getEdgeSerializer().readRelation(data, true, tx);
         return readRelation(vertex,relation,data,tx,tx);
     }
@@ -81,6 +86,7 @@ public class RelationConstructor {
 
     private static InternalRelation readRelation(final InternalVertex vertex, final RelationCache relation,
                                          final Entry data, final TypeInspector types, final VertexFactory vertexFac) {
+        // 根据propertyId 获取 PropertyKeyVertex
         InternalRelationType type = TypeUtil.getBaseType((InternalRelationType) types.getExistingRelationType(relation.typeId));
 
         if (type.isPropertyKey()) {

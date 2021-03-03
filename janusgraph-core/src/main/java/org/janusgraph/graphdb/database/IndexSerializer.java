@@ -23,6 +23,7 @@ import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.core.schema.SchemaStatus;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.graphdb.database.serialize.InternalAttributeUtil;
+import org.janusgraph.graphdb.database.serialize.StandardSerializer;
 import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.ElementCategory;
 import org.janusgraph.graphdb.internal.InternalRelation;
@@ -732,7 +733,9 @@ public class IndexSerializer {
     }
 
     // 源码中本方法是private,为了测试暂时修改为public
+    // 通过复合索引和属性值获取复合索引rowkey
     public StaticBuffer getIndexKey(CompositeIndexType index, Object[] values) {
+        // StandardSerializer $ StandardDataOutput
         final DataOutput out = serializer.getDataOutput(8*DEFAULT_OBJECT_BYTELEN + 8);
         VariableLong.writePositive(out, index.getID());
         final IndexField[] fields = index.getFieldKeys();

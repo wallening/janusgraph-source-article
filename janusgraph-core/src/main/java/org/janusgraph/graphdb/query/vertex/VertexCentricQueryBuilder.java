@@ -70,7 +70,8 @@ public class VertexCentricQueryBuilder extends BasicVertexCentricQueryBuilder<Ve
         if (returnType==RelationCategory.PROPERTY && hasSingleType() && !hasQueryOnlyLoaded()
                 && tx.getConfiguration().hasPropertyPrefetching()) {
             //Preload properties
-            vertex.query().properties().iterator().hasNext();
+            VertexCentricQueryBuilder q = vertex.query();
+            q.properties().iterator().hasNext();
         }
 
         if (isPartitionedVertex(vertex) && !hasQueryOnlyGivenVertex()) { //If it's a preloaded vertex we shouldn't preload data explicitly
@@ -95,7 +96,8 @@ public class VertexCentricQueryBuilder extends BasicVertexCentricQueryBuilder<Ve
 
     @Override
     public Iterable<JanusGraphVertexProperty> properties() {
-        return (Iterable)(isImplicitKeyQuery(RelationCategory.PROPERTY)?
+        boolean isImplicitKeyQuery= isImplicitKeyQuery(RelationCategory.PROPERTY);
+        return (Iterable)(isImplicitKeyQuery?
                 executeImplicitKeyQuery(vertex):
                 execute(RelationCategory.PROPERTY, new RelationConstructor()));
     }
