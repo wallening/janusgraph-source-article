@@ -32,6 +32,7 @@ import org.janusgraph.graphdb.database.idhandling.VariableLong;
 import org.janusgraph.graphdb.database.serialize.DataOutput;
 import org.janusgraph.graphdb.database.serialize.InternalAttributeUtil;
 import org.janusgraph.graphdb.database.serialize.Serializer;
+import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.*;
 import org.janusgraph.graphdb.relations.EdgeDirection;
 import org.janusgraph.graphdb.relations.RelationCache;
@@ -86,9 +87,7 @@ public class EdgeSerializer implements RelationReader {
     @Override
     public RelationCache parseRelation(Entry data, boolean excludeProperties, TypeInspector tx) {
         ReadBuffer in = data.asReadBuffer();
-
         RelationTypeParse typeAndDir = IDHandler.readRelationType(in);
-
         long typeId = typeAndDir.typeId;
         Direction dir = typeAndDir.dirID.getDirection();
 
@@ -96,6 +95,15 @@ public class EdgeSerializer implements RelationReader {
         InternalRelationType def = (InternalRelationType) relationType;
         Multiplicity multiplicity = def.multiplicity();
         long[] keySignature = def.getSortKey();
+
+        if ("e1".equals(relationType.name())){
+            logger.debug("");
+        }
+
+        boolean islog = !IDManager.isSystemRelationTypeId(typeId);
+        if (islog) {
+            logger.info("反序列化 relationType: {}", relationType.name());
+        }
 
         long relationId;
         Object other;
@@ -139,6 +147,10 @@ public class EdgeSerializer implements RelationReader {
                 "Encountered error in deserializer [null value returned]. Check serializer compatibility.");
         }
 
+        if (islog) {
+            logger.info("反序列化 other: {}", other);
+        }
+
         if (!excludeProperties) {
 
             LongObjectHashMap<Object> properties = new LongObjectHashMap<>(4);
@@ -164,6 +176,10 @@ public class EdgeSerializer implements RelationReader {
                 Object propertyValue = readInline(in, type, InlineType.NORMAL);
                 assert propertyValue != null;
                 properties.put(type.longId(), propertyValue);
+
+                if (islog) {
+                    logger.debug("反序列化 属性 PropertyKey: {} propertyValue: {}", type.name(), propertyValue);
+                }
             }
 
             if (data.hasMetaData()) {
@@ -203,10 +219,11 @@ public class EdgeSerializer implements RelationReader {
         if (InternalAttributeUtil.hasGenericDataType(key)) {
             return serializer.readClassAndObject(read);
         } else {
-            if (inlineType.writeByteOrdered())
+            if (inlineType.writeByteOrdered()){
                 return serializer.readObjectByteOrder(read, key.dataType());
-            else
+            } else {
                 return serializer.readObject(read, key.dataType());
+            }
         }
     }
 

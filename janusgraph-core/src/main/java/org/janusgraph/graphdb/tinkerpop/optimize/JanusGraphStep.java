@@ -42,6 +42,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.util.MutableMetrics;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +58,7 @@ import java.util.Map.Entry;
  * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implements HasStepFolder<S, E>, Profiling, HasContainerHolder {
+    private static final Logger log = LoggerFactory.getLogger(JanusGraphStep.class);
 
     private final List<HasContainer> hasContainers = new ArrayList<>();
     private final Map<List<HasContainer>, QueryInfo> hasLocalContainers = new LinkedHashMap<>();
@@ -151,6 +154,12 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
     private void executeGraphCentricQuery(final GraphCentricQueryBuilder builder, final List<Iterator<E>> responses,
             final Entry<Integer, GraphCentricQuery> query) {
+
+        if (query.toString().contains("value[v1:p1]")){
+            log.debug("执行查询 ==> {}", query);
+            log.debug("执行查询 ==> debug");
+        }
+
         final Class<? extends JanusGraphElement> graphClass = Vertex.class.isAssignableFrom(this.returnClass) ? JanusGraphVertex.class: JanusGraphEdge.class;
         final Iterator<E> response = (Iterator<E>) builder.iterables(query.getValue(), graphClass).iterator(); // 真正执行查询的代码
         long i = 0;

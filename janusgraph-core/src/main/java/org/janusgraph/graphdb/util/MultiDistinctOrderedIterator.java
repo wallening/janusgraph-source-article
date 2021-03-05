@@ -34,8 +34,11 @@ import org.apache.tinkerpop.gremlin.util.function.MultiComparator;
 import org.janusgraph.graphdb.tinkerpop.optimize.HasStepFolder.OrderEntry;
 
 import com.google.common.collect.Iterators;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MultiDistinctOrderedIterator<E extends Element> implements Iterator<E> {
+    private static final Logger log = LoggerFactory.getLogger(MultiDistinctOrderedIterator.class);
 
     private final Map<Integer, Iterator<E>> iterators = new LinkedHashMap<>();
     private final Map<Integer, E> values = new LinkedHashMap<>();
@@ -71,11 +74,17 @@ public class MultiDistinctOrderedIterator<E extends Element> implements Iterator
         if (limit != null && count >= limit) {
             return false;
         }
+
         for (int i = 0; i < iterators.size(); i++) {
+            log.debug("遍历结果集 ==> 开始查询");
+
             if (!values.containsKey(i) && iterators.get(i).hasNext()){
                 E element = null;
                 do {
                     element = iterators.get(i).next();
+
+                    log.debug("遍历结果集 ==> element: {}", element);
+
                     if (allElements.contains(element)) {
                         element = null;
                     }

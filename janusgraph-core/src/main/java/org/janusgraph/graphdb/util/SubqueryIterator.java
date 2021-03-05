@@ -31,11 +31,14 @@ import org.janusgraph.graphdb.query.graph.JointIndexQuery;
 import org.janusgraph.graphdb.query.profile.QueryProfiler;
 
 import com.google.common.cache.Cache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author davidclement90@laposte.net
  */
 public class SubqueryIterator implements Iterator<JanusGraphElement>, AutoCloseable {
+    static Logger logger = LoggerFactory.getLogger(SubqueryIterator.class);
 
     private final JointIndexQuery.Subquery subQuery;
 
@@ -52,6 +55,9 @@ public class SubqueryIterator implements Iterator<JanusGraphElement>, AutoClosea
     public SubqueryIterator(JointIndexQuery.Subquery subQuery, IndexSerializer indexSerializer, BackendTransaction tx,
             Cache<JointIndexQuery.Subquery, List<Object>> indexCache, int limit,
             Function<Object, ? extends JanusGraphElement> function, List<Object> otherResults) {
+
+        logger.debug("准备执行查询 {}",SubqueryIterator.class);
+
         this.subQuery = subQuery;
         this.indexCache = indexCache;
         final List<Object> cacheResponse = indexCache.getIfPresent(subQuery);

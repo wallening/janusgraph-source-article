@@ -23,7 +23,6 @@ import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.core.schema.SchemaStatus;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.graphdb.database.serialize.InternalAttributeUtil;
-import org.janusgraph.graphdb.database.serialize.StandardSerializer;
 import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.ElementCategory;
 import org.janusgraph.graphdb.internal.InternalRelation;
@@ -58,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NAME_MAPPING;
@@ -68,7 +68,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IN
 
 public class IndexSerializer {
 
-    private static final Logger log = LoggerFactory.getLogger(IndexSerializer.class);
+    private static final Logger logger = LoggerFactory.getLogger(IndexSerializer.class);
 
     private static final int DEFAULT_OBJECT_BYTELEN = 30;
     private static final byte FIRST_INDEX_COLUMN_BYTE = 0;
@@ -85,7 +85,7 @@ public class IndexSerializer {
         this.configuration = config;
         this.mixedIndexes = indexes;
         this.hashKeys=hashKeys;
-        if (hashKeys) log.info("Hashing index keys");
+        if (hashKeys) logger.info("Hashing index keys");
     }
 
 
@@ -523,16 +523,26 @@ public class IndexSerializer {
             final List<EntryList> rs = sq.execute(tx);
             final List<Object> results = new ArrayList<>(rs.get(0).size());
             for (final EntryList r : rs) {
-                for (final java.util.Iterator<Entry> iterator = r.reuseIterator(); iterator.hasNext(); ) {
+                final java.util.Iterator<Entry> iterator = r.reuseIterator();
+                while ( iterator.hasNext()) {
                     final Entry entry = iterator.next();
                     final ReadBuffer entryValue = entry.asReadBuffer();
                     entryValue.movePositionTo(entry.getValuePosition());
                     switch(index.getElement()) {
                         case VERTEX:
-                            results.add(VariableLong.readPositive(entryValue));
+                            long id = VariableLong.readPositive(entryValue);
+                            logger.debug("复合索引查询 ==> 点id: {}", id);
+
+                            if (id == 4240){
+                                logger.debug("复合索引查询 ==> debug");
+                            }
+
+                            results.add(id);
                             break;
                         default:
-                            results.add(bytebuffer2RelationId(entryValue));
+                            RelationIdentifier id2 = bytebuffer2RelationId(entryValue);
+                            logger.debug("复合索引查询 ==> 边id: {}", id2);
+                            results.add(id2);
                     }
                 }
             }
@@ -631,8 +641,8 @@ public class IndexSerializer {
             replacements++;
         }
         final String queryStr = qB.toString();
-        if (replacements<=0) log.warn("Could not convert given {} index query: [{}]",resultType, query.getQuery());
-        log.info("Converted query string with {} replacements: [{}] => [{}]",replacements,query.getQuery(),queryStr);
+        if (replacements<=0) logger.warn("Could not convert given {} index query: [{}]",resultType, query.getQuery());
+        logger.info("Converted query string with {} replacements: [{}] => [{}]",replacements,query.getQuery(),queryStr);
         return queryStr;
     }
 
@@ -727,6 +737,10 @@ public class IndexSerializer {
         return LongEncoding.decode(name);
     }
 
+    public static void main(String[] args) {
+        System.out.println(name2LongID("v1_p1"));
+    }
+
 
     private StaticBuffer getIndexKey(CompositeIndexType index, RecordEntry[] record) {
         return getIndexKey(index,IndexRecords.getValues(record));
@@ -734,7 +748,10 @@ public class IndexSerializer {
 
     // 源码中本方法是private,为了测试暂时修改为public
     // 通过复合索引和属性值获取复合索引rowkey
-    public StaticBuffer getIndexKey(CompositeIndexType index, Object[] values) {
+    private StaticBuffer getIndexKey(CompositeIndexType index, Object[] values) {
+        String s = Arrays.asList(values).stream().map(v->v.toString()).collect(Collectors.joining(","));
+        logger.debug("复合索引获取rowkey CompositeIndexType: {} values: {}", index.getName(), s);
+
         // StandardSerializer $ StandardDataOutput
         final DataOutput out = serializer.getDataOutput(8*DEFAULT_OBJECT_BYTELEN + 8);
         VariableLong.writePositive(out, index.getID());

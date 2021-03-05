@@ -20,16 +20,18 @@ import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.JanusGraphRelation;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.graphdb.database.EdgeSerializer;
+import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
-import org.janusgraph.graphdb.query.vertex.SimpleVertexQueryProcessor;
 import org.janusgraph.graphdb.relations.CacheEdge;
 import org.janusgraph.graphdb.relations.CacheVertexProperty;
 import org.janusgraph.graphdb.relations.RelationCache;
 import org.janusgraph.graphdb.types.TypeInspector;
 import org.janusgraph.graphdb.types.TypeUtil;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
@@ -37,7 +39,7 @@ import java.util.Iterator;
  * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class RelationConstructor {
-
+    private static final Logger logger = LoggerFactory.getLogger(RelationConstructor.class);
     public static RelationCache readRelationCache(Entry data, StandardJanusGraphTx tx) {
         return tx.getEdgeSerializer().readRelation(data, false, tx);
     }
@@ -71,7 +73,10 @@ public class RelationConstructor {
     }
 
     public static InternalRelation readRelation(final InternalVertex vertex, final Entry data, final StandardJanusGraphTx tx) {
-        // 序列化属性
+        boolean islog = !IDManager.isSystemRelationTypeId((long)vertex.id());
+        if (islog) {
+            logger.debug("反序列化并组装为属性CacheVertexProperty或边对象CacheEdge label: {} id: {}",vertex.label(),vertex.id());
+        }
         RelationCache relation = tx.getEdgeSerializer().readRelation(data, true, tx);
         return readRelation(vertex,relation,data,tx,tx);
     }
@@ -86,7 +91,11 @@ public class RelationConstructor {
 
     private static InternalRelation readRelation(final InternalVertex vertex, final RelationCache relation,
                                          final Entry data, final TypeInspector types, final VertexFactory vertexFac) {
-        // 根据propertyId 获取 PropertyKeyVertex
+
+        boolean islog = !IDManager.isSystemRelationTypeId(relation.typeId);
+        if (islog) {
+            logger.debug("组装反序列化后的属性或边");
+        }
         InternalRelationType type = TypeUtil.getBaseType((InternalRelationType) types.getExistingRelationType(relation.typeId));
 
         if (type.isPropertyKey()) {
